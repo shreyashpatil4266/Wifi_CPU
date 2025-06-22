@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📶 WiFi Speed & CPU Usage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #00ffcc;
+    }
+    .data-box {
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px auto;
+      width: 320px;
+      box-shadow: 0 0 12px rgba(0, 255, 204, 0.2);
+    }
+    button {
+      background-color: #00ffcc;
+      color: #000;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #00e6b8;
+    }
+    .loading {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>📶 WiFi Speed & CPU Usage</h1>
+
+  <div class="data-box">
+    <h2>Speed Test Results</h2>
+    <p>Download: <span id="download">0</span> Mbps</p>
+    <p>Upload: <span id="upload">0</span> Mbps</p>
+    <p>Ping: <span id="ping">0</span> ms</p>
+    <div class="loading" id="loadingMsg"></div>
+    <button onclick="runSpeedTest()">Run Speed Test</button>
+  </div>
+
+  <div class="data-box">
+    <h2>CPU Usage</h2>
+    <p>Current CPU: <span id="cpu">0</span>%</p>
+  </div>
+
+  <script>
+    function animateValue(id, end, duration = 1500, callback) {
+      const obj = document.getElementById(id);
+      const start = 0;
+      const range = end - start;
+      let startTime = null;
+
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = timestamp - startTime;
+        const value = Math.min(start + (range * progress / duration), end);
+        obj.innerText = value.toFixed(2);
+        if (progress < duration) {
+          requestAnimationFrame(animate);
+        } else {
+          obj.innerText = end.toFixed(2);
+          if (callback) callback();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function runSpeedTest() {
+      document.getElementById("loadingMsg").innerText = "Running test...";
+      document.getElementById("download").innerText = "0";
+      document.getElementById("upload").innerText = "0";
+      document.getElementById("ping").innerText = "0";
+
+      fetch("/speedtest")
+        .then(response => response.json())
+        .then(data => {
+          animateValue("download", data.download, 1500, () => {
+            animateValue("upload", data.upload, 1500, () => {
+              document.getElementById("ping").innerText = data.ping.toFixed(2);
+              document.getElementById("loadingMsg").innerText = "";
+            });
+          });
+        })
+        .catch(error => {
+          document.getElementById("loadingMsg").innerText = "Error running test.";
+          console.error(error);
+        });
+    }
+
+    function updateCPU() {
+      fetch("/cpu")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("cpu").innerText = data.cpu;
+        });
+    }
+
+    setInterval(updateCPU, 3000);
+    updateCPU();
+  </script>
+</body>
+</html>
