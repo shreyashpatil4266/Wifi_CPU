@@ -11,7 +11,7 @@ WORKDIR /app
 COPY . .
 
 # Install Python packages
-RUN pip install --no-cache-dir flask speedtest-cli psutil
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
